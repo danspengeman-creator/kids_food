@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kids Food Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    h2 {
+      margin-bottom: 16px;
+      color: #333;
+      font-size: 1.3rem;
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 6px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    button:active {
+      transform: scale(0.98);
+    }
+    
+    .restaurant-item {
+      background: #f8f9fa;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .restaurant-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+    
+    .food-entry {
+      padding: 6px 0;
+      color: #555;
+    }
+    
+    .kid-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-right: 6px;
+    }
+    
+    .kid-lillian { background: #ffd6e8; color: #c2185b; }
+    .kid-nolan { background: #c5e1ff; color: #1565c0; }
+    .kid-maybelle { background: #d4edda; color: #155724; }
+    
+    .empty-state {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🍽️ Kids Food Tracker</h1>
+    
+    <div class="card">
+      <h2>Add New Entry</h2>
+      <form id="entryForm">
+        <div class="form-group">
+          <label>Restaurant</label>
+          <input type="text" id="restaurant" placeholder="Enter restaurant name" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Food</label>
+          <input type="text" id="food" placeholder="What did they like?" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Kid</label>
+          <select id="kid" required>
+            <option value="">Choose a kid</option>
+            <option value="Lillian">Lillian</option>
+            <option value="Nolan">Nolan</option>
+            <option value="Maybelle">Maybelle</option>
+          </select>
+        </div>
+        
+        <button type="submit">Add Entry</button>
+      </form>
+    </div>
+    
+    <div class="card">
+      <h2>Food by Restaurant</h2>
+      <div id="restaurantList"></div>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwLvQkGgMmVDlLNp0mqS1wLKS2EsCMD3fPKZ3rk-XrzlW44nLYVp0ZDeWTYa37H__u-/exec';
+    
+    let allEntries = [];
+    
+    async function loadData() {
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'getAllData' })
+        });
+        const data = await response.json();
+        allEntries = data.entries || [];
+        renderRestaurants();
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+    
+    function renderRestaurants() {
+      const listEl = document.getElementById('restaurantList');
+      
+      if (allEntries.length === 0) {
+        listEl.innerHTML = '<div class="empty-state">No entries yet. Add your first one above!</div>';
+        return;
+      }
+      
+      const byRestaurant = {};
+      allEntries.forEach(entry => {
+        if (!byRestaurant[entry.restaurant]) {
+          byRestaurant[entry.restaurant] = [];
+        }
+        byRestaurant[entry.restaurant].push(entry);
+      });
+      
+      const restaurantNames = Object.keys(byRestaurant).sort();
+      
+      listEl.innerHTML = restaurantNames.map(restaurant => {
+        const entries = byRestaurant[restaurant];
+        const foodItems = entries.map(e => 
+          `<div class="food-entry">
+            <span class="kid-badge kid-${e.kid.toLowerCase()}">${e.kid}</span>
+            ${e.food}
+          </div>`
+        ).join('');
+        
+        return `
+          <div class="restaurant-item">
+            <div class="restaurant-name">${restaurant}</div>
+            ${foodItems}
+          </div>
+        `;
+      }).join('');
+    }
+    
+    document.getElementById('entryForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const restaurant = document.getElementById('restaurant').value.trim();
+      const food = document.getElementById('food').value.trim();
+      const kid = document.getElementById('kid').value;
+      
+      try {
+        await fetch(SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'addEntry',
+            restaurant,
+            food,
+            kid
+          })
+        });
+        
+        document.getElementById('restaurant').value = '';
+        document.getElementById('food').value = '';
+        document.getElementById('kid').value = '';
+        
+        await loadData();
+      } catch (error) {
+        console.error('Error adding entry:', error);
+      }
+    });
+    
+    loadData();
+  </script>
+</body>
+</html>
