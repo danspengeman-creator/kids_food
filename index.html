@@ -170,11 +170,14 @@
     
     async function loadData() {
       try {
+        console.log('Loading data from:', SCRIPT_URL);
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: JSON.stringify({ action: 'getAllData' })
         });
+        console.log('Response status:', response.status);
         const data = await response.json();
+        console.log('Response data:', data);
         allEntries = data.entries || [];
         renderRestaurants();
       } catch (error) {
@@ -225,8 +228,10 @@
       const food = document.getElementById('food').value.trim();
       const kid = document.getElementById('kid').value;
       
+      console.log('Submitting:', { restaurant, food, kid });
+      
       try {
-        await fetch(SCRIPT_URL, {
+        const response = await fetch(SCRIPT_URL, {
           method: 'POST',
           body: JSON.stringify({
             action: 'addEntry',
@@ -235,6 +240,9 @@
             kid
           })
         });
+        console.log('Submit response status:', response.status);
+        const result = await response.json();
+        console.log('Submit result:', result);
         
         document.getElementById('restaurant').value = '';
         document.getElementById('food').value = '';
