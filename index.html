@@ -173,6 +173,7 @@
         console.log('Loading data from:', SCRIPT_URL);
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
+          redirect: 'follow',
           body: JSON.stringify({ action: 'getAllData' })
         });
         console.log('Response status:', response.status);
@@ -233,6 +234,7 @@
       try {
         const response = await fetch(SCRIPT_URL, {
           method: 'POST',
+          redirect: 'follow',
           body: JSON.stringify({
             action: 'addEntry',
             restaurant,
